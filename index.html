@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIPropria | The Junction</title>
+    
+    <!-- Google Fonts Import -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- RESET & VARIABLES --- */
+        :root {
+            /* Colors */
+            --bg-charcoal: #0A0B10;
+            --bg-beige: #F2F0E9;
+            --bg-white: #FFFFFF;
+            
+            --text-nav: #888888;
+            --text-active: #FFFFFF;
+            
+            /* Spoke Specifics */
+            --col-strategist: #1A0F0F;
+            --col-operator: #0055FF; 
+            --col-creator: #000000;
+
+            /* Physics */
+            --ease-heavy: cubic-bezier(0.2, 0.0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-charcoal);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            transition: background-color 1.2s var(--ease-heavy);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- BACKGROUND FX --- */
+        .ambient-light {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0) 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* --- MAIN INTERFACE --- */
+        .interface-container {
+            z-index: 10;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        /* 1. INTENT BAR (Input) */
+        .intent-bar-wrapper {
+            position: relative;
+            margin: 0 auto 30px auto;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .intent-bar {
+            width: 100%;
+            height: 64px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            transition: all 0.5s var(--ease-heavy);
+        }
+
+        .intent-input-display {
+            font-family: 'Space Mono', monospace;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9); /* Default white */
+            width: 100%;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            transition: color 0.5s ease;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 18px;
+            background-color: rgba(255, 255, 255, 0.5);
+            margin-left: 4px;
+            animation: blink 1s infinite;
+        }
+
+        /* 2. THE RESPONSE (Output) */
+        .response-text {
+            min-height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.8s var(--ease-heavy);
+        }
+        
+        /* State Classes for Response */
+        .response-text.visible { opacity: 1; transform: translateY(0); }
+        
+        .spoke-strategist {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 26px;
+            font-style: italic;
+            color: var(--col-strategist);
+        }
+        
+        .spoke-operator {
+            font-family: 'Space Mono', monospace;
+            font-size: 14px;
+            letter-spacing: 1px;
+            color: var(--text-active); /* Keep white on dark */
+            text-transform: uppercase;
+        }
+
+        .spoke-creator {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 32px;
+            letter-spacing: -1px;
+            color: var(--col-creator);
+        }
+
+        /* 3. THREE STATE SWITCH */
+        .switch-nav {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .switch-item {
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            color: var(--text-nav);
+            text-transform: uppercase;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .switch-item.active {
+            color: var(--text-active);
+        }
+
+        /* --- TICKER --- */
+        .ticker-wrap {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 40px;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(4px);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .ticker {
+            display: flex;
+            white-space: nowrap;
+            animation: ticker 30s linear infinite;
+        }
+
+        .ticker-item {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            padding-right: 40px;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* --- STATE OVERRIDES --- */
+        /* Beige Mode (Strategist) */
+        body.mode-beige { background-color: var(--bg-beige); }
+        body.mode-beige .intent-bar { border-color: rgba(0,0,0,0.1); background: rgba(0,0,0,0.03); }
+        body.mode-beige .intent-input-display { color: #333; }
+        body.mode-beige .cursor { background-color: #333; }
+        body.mode-beige .switch-item.active { color: #000; }
+        body.mode-beige .ticker-item { color: rgba(0,0,0,0.6); }
+        body.mode-beige .ticker-wrap { background: rgba(255,255,255,0.1); border-top: 1px solid rgba(0,0,0,0.05); }
+
+        /* White Mode (Creator) */
+        body.mode-white { background-color: var(--bg-white); }
+        body.mode-white .intent-bar { border-color: rgba(0,0,0,0.1); background: rgba(0,0,0,0.02); }
+        body.mode-white .intent-input-display { color: #000; }
+        body.mode-white .cursor { background-color: #000; }
+        body.mode-white .switch-item.active { color: #000; }
+        body.mode-white .ticker-item { color: rgba(0,0,0,0.8); }
+        body.mode-white .ticker-wrap { background: rgba(0,0,0,0.05); border-top: 1px solid rgba(0,0,0,0.05); }
+
+    </style>
+</head>
+<body>
+
+    <div class="ambient-light"></div>
+
+    <main class="interface-container">
+        
+        <!-- INTENT BAR -->
+        <div class="intent-bar-wrapper">
+            <div class="intent-bar">
+                <div class="intent-input-display">
+                    <span id="typewriter"></span><span class="cursor"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- OUTPUT RESPONSE -->
+        <div id="response-container" class="response-text">
+            <!-- Content injected via JS -->
+        </div>
+
+        <!-- NAVIGATION SWITCH -->
+        <nav class="switch-nav">
+            <div id="nav-strategist" class="switch-item">Strategist</div>
+            <div id="nav-operator" class="switch-item">Operator</div>
+            <div id="nav-creator" class="switch-item">Creator</div>
+        </nav>
+
+    </main>
+
+    <!-- FOOTER TICKER -->
+    <footer class="ticker-wrap">
+        <div class="ticker">
+            <div class="ticker-item">/// LIVE MARKET: [01] The "Samsung Protocol" (PDF - $0)</div>
+            <div class="ticker-item">/// [02] Clay.com "Cold Outreach" Blueprint (JSON - $49)</div>
+            <div class="ticker-item">/// [03] Midjourney Style Reference: "Tech-Noir" (Prompt Library - $19)</div>
+            <div class="ticker-item">/// [04] Private LLM Cost Calculator (XLS - $0)</div>
+            <!-- Duplicate for infinite loop -->
+            <div class="ticker-item">/// LIVE MARKET: [01] The "Samsung Protocol" (PDF - $0)</div>
+            <div class="ticker-item">/// [02] Clay.com "Cold Outreach" Blueprint (JSON - $49)</div>
+            <div class="ticker-item">/// [03] Midjourney Style Reference: "Tech-Noir" (Prompt Library - $19)</div>
+            <div class="ticker-item">/// [04] Private LLM Cost Calculator (XLS - $0)</div>
+        </div>
+    </footer>
+
+    <script>
+        // --- DATA ENGINE ---
+        const sequence = [
+            {
+                input: "My board is terrified of ChatGPT data leaks.",
+                output: "Deploying The 'Samsung Protocol' Governance Framework.",
+                spoke: "strategist",
+                mode: "mode-beige",
+                styleClass: "spoke-strategist"
+            },
+            {
+                input: "I spend 2 hours a day manually sorting leads.",
+                output: "> INITIATING: N8N_WORKFLOW_V4. EXEC: AUTOPILOT.",
+                spoke: "operator",
+                mode: "mode-dark", // Default
+                styleClass: "spoke-operator"
+            },
+            {
+                input: "We need to turn 1 podcast episode into 30 clips.",
+                output: "Visual Asset Scaling: 30x Multiplier Active.",
+                spoke: "creator",
+                mode: "mode-white",
+                styleClass: "spoke-creator"
+            }
+        ];
+
+        // --- ELEMENT SELECTORS ---
+        const body = document.body;
+        const typewriterEl = document.getElementById('typewriter');
+        const responseContainer = document.getElementById('response-container');
+        const navItems = {
+            strategist: document.getElementById('nav-strategist'),
+            operator: document.getElementById('nav-operator'),
+            creator: document.getElementById('nav-creator')
+        };
+
+        let currentIndex = 0;
+
+        // --- TYPING LOGIC ---
+        function typeText(text, i, callback) {
+            if (i < text.length) {
+                typewriterEl.innerHTML = text.substring(0, i + 1);
+                // Random typing speed variation for realism
+                setTimeout(() => typeText(text, i + 1, callback), Math.random() * 30 + 30); 
+            } else {
+                setTimeout(callback, 800); // Pause after typing before action
+            }
+        }
+
+        function deleteText(callback) {
+            let text = typewriterEl.innerHTML;
+            let length = text.length;
+            if (length > 0) {
+                typewriterEl.innerHTML = text.substring(0, length - 1);
+                setTimeout(() => deleteText(callback), 10); // Fast delete
+            } else {
+                callback();
+            }
+        }
+
+        // --- ORCHESTRATOR ---
+        function runSequence() {
+            const currentScene = sequence[currentIndex];
+
+            // 1. Reset State
+            responseContainer.classList.remove('visible');
+            
+            // 2. Start Typing Input
+            typeText(currentScene.input, 0, () => {
+                
+                // 3. Trigger Physics Shift
+                shiftAtmosphere(currentScene);
+
+                // 4. Show Response
+                setTimeout(() => {
+                    responseContainer.innerHTML = `<span class="${currentScene.styleClass}">${currentScene.output}</span>`;
+                    responseContainer.classList.add('visible');
+                }, 300);
+
+                // 5. Wait, then Reset for Next Loop
+                setTimeout(() => {
+                    responseContainer.classList.remove('visible');
+                    
+                    // Delay delete slightly to allow fade out
+                    setTimeout(() => {
+                        deleteText(() => {
+                            currentIndex = (currentIndex + 1) % sequence.length;
+                            runSequence();
+                        });
+                    }, 500);
+                    
+                }, 4000); // How long to read the answer
+            });
+        }
+
+        function shiftAtmosphere(scene) {
+            // Remove all mode classes
+            body.classList.remove('mode-beige', 'mode-white');
+            
+            // Add specific mode class if not default dark
+            if (scene.mode !== 'mode-dark') {
+                body.classList.add(scene.mode);
+            }
+
+            // Update Nav Highlights
+            Object.values(navItems).forEach(el => el.classList.remove('active'));
+            if(navItems[scene.spoke]) {
+                navItems[scene.spoke].classList.add('active');
+            }
+        }
+
+        // --- INITIALIZATION ---
+        window.addEventListener('load', () => {
+            // Start the Operator highlight initially (since we start dark)
+            navItems['operator'].classList.add('active'); 
+            
+            // Start the loop after a brief delay
+            setTimeout(runSequence, 1000);
+        });
+
+    </script>
+</body>
+</html>
